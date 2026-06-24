@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth overflow-x-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВВС Двора | Портал Вербовки</title>
+    <meta name="description" content="Официальный портал набора в элитные Военно-Водоплавающие Силы.">
+    
+    <!-- CSS Framework & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'obsidian': '#0a0a0a',
+                        'carbon': '#121212',
+                        'steel': '#2a2a2a',
+                        'gold': { primary: '#d4af37', dim: '#8a7322' },
+                        'blood': '#8a0303',
+                        'terminal-green': '#00ff41'
+                    },
+                    fontFamily: {
+                        'monumental': ['Oswald', 'sans-serif'],
+                        'terminal': ['"Space Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Utilities -->
+    <style>
+        body {
+            background-color: #050505;
+            color: #e5e5e5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* SVG Animations */
+        .marching-ants { stroke-dasharray: 8 8; }
+        /* Отрубаем расчет анимации на мобилках */
+        @media (min-width: 768px) {
+            .marching-ants { animation: march 2s linear infinite; }
+        }
+        @keyframes march { to { stroke-dashoffset: -16; } }
+
+        /* UI Utilities */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Scanner Effect (ИЗОЛИРОВАНО НА GPU) */
+        .scanner-line {
+            position: absolute; left: 0; top: 0; width: 100%; height: 2px;
+            background: #d4af37;
+            box-shadow: 0 0 15px 3px rgba(212,175,55,0.8), 0 0 30px rgba(212,175,55,0.4);
+            z-index: 25;
+            will-change: transform, opacity;
+            transform: translateZ(0); /* Форсируем хардварный слой */
+            animation: scan 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        @keyframes scan {
+            0% { transform: translateY(-10px); opacity: 0; }
+            15%, 85% { opacity: 1; }
+            100% { transform: translateY(400px); opacity: 0; }
+        }
+
+        /* Background Patterns */
+        .bg-grid {
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-obsidian font-terminal text-gray-300 relative overflow-x-hidden w-full">
+
+    <!-- ==========================================
+         HEADER / NAVIGATION
+         ========================================== -->
+    <!-- ФИКС: Убран backdrop-blur на мобильных во избежание GPU Crash -->
+    <header class="bg-obsidian md:bg-obsidian/95 md:backdrop-blur-md border-b border-steel fixed top-0 w-full z-[100] shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16 relative">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-2 md:gap-3 z-20">
+                <div class="w-7 h-7 md:w-8 md:h-8 border border-gold-primary flex items-center justify-center bg-carbon relative shrink-0">
+                    <div class="absolute w-1 h-1 bg-gold-primary top-1 left-1"></div>
+                    <i class="fa-solid fa-feather-pointed text-gold-primary text-xs md:text-sm"></i>
+                </div>
+                <span class="font-monumental font-bold text-lg md:text-xl text-white tracking-[0.2em] uppercase">ГК<span class="text-gold-dim">ВВС</span></span>
+            </div>
+            
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex space-x-8 items-center">
+                <a href="#commander" class="hover:text-gold-primary transition-colors text-xs uppercase tracking-[0.15em] cursor-pointer">Командование</a>
+                <a href="#map" class="hover:text-gold-primary transition-colors text-xs uppercase tracking-[0.15em] cursor-pointer">Карта ТВД</a>
+                <a href="#hierarchy" class="hover:text-gold-primary transition-colors text-xs uppercase tracking-[0.15em] cursor-pointer">Иерархия</a>
+                <a href="#faq" class="hover:text-gold-primary transition-colors text-xs uppercase tracking-[0.15em] cursor-pointer">Брифинг</a>
+                <a href="#enlist" class="text-gold-primary hover:text-black transition-colors text-xs uppercase tracking-[0.15em] border border-gold-dim px-4 py-2 hover:bg-gold-primary cursor-pointer font-bold">Рапорт</a>
+            </nav>
+
+            <!-- Mobile Toggle -->
+            <button id="mobile-menu-btn" class="md:hidden text-gray-400 hover:text-white cursor-pointer p-2 z-20" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Nav -->
+        <nav id="mobile-menu" class="hidden md:hidden bg-carbon border-b border-steel absolute w-full left-0 top-16 z-[90] shadow-2xl">
+            <div class="px-4 py-2 flex flex-col divide-y divide-steel/50">
+                <a href="#commander" class="text-gray-300 hover:text-gold-primary py-4 text-sm uppercase tracking-widest text-center block nav-mobile-link">Командование</a>
+                <a href="#map" class="text-gray-300 hover:text-gold-primary py-4 text-sm uppercase tracking-widest text-center block nav-mobile-link">Карта ТВД</a>
+                <a href="#hierarchy" class="text-gray-300 hover:text-gold-primary py-4 text-sm uppercase tracking-widest text-center block nav-mobile-link">Иерархия</a>
+                <a href="#faq" class="text-gray-300 hover:text-gold-primary py-4 text-sm uppercase tracking-widest text-center block nav-mobile-link">Брифинг</a>
+                <a href="#enlist" class="text-gold-primary py-4 text-sm uppercase tracking-widest font-bold text-center block bg-gold-primary/10 nav-mobile-link">Рапорт</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ФИКС: Жестко режем все, что пытается раздвинуть мобильный экран -->
+    <main class="pt-16 w-full overflow-hidden">
+        <!-- ==========================================
+             HERO SECTION
+             ========================================== -->
+        <section class="relative min-h-[85vh] flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(26,26,26,1)_0%,rgba(10,10,10,1)_100%)] pt-10 pb-20 border-b border-steel">
+            <div class="absolute inset-0 bg-grid pointer-events-none"></div>
+            
+            <div class="relative z-10 max-w-5xl mx-auto px-4 text-center w-full">
+                <div class="inline-block border border-gold-dim/50 px-3 py-1 mb-6 bg-black/50 text-gold-primary text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em]">
+                    Система мобилизации активирована
+                </div>
+                
+                <!-- ФИКС: break-all рубит огромные слова на мобильных экранах -->
+                <h1 class="font-monumental uppercase tracking-widest leading-none drop-shadow-[0_0_15px_rgba(212,175,55,0.4)] w-full">
+                    <span class="block text-2xl sm:text-4xl md:text-6xl lg:text-7xl text-white mb-2 break-all md:break-words">ВОЕННО-ВОДОПЛАВАЮЩИЕ</span>
+                    <span class="block text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-gold-primary mb-6">СИЛЫ (ВВС)</span>
+                </h1>
+                
+                <p class="mt-6 text-xs sm:text-sm md:text-base text-gray-400 max-w-2xl mx-auto leading-relaxed border-l-2 border-gold-dim pl-4 text-left font-terminal">
+                        Сектор "Двор" находится под контролем млекопитающих. Гражданские распределяют ресурсы неэффективно. Главное Командование объявляет экстренный набор в элитные подразделения. Наша цель — абсолютный контроль пищевых цепочек и водных рубежей. Твой пух дрожит, но клюв должен быть твердым.
+                    </p>
+                    
+                    <!-- Stats Grid -->
+                    <div class="mt-12 md:mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 border-y border-steel py-6 md:py-8 bg-carbon/50 relative z-20" id="stats-container">
+                        <!-- Stats populated by JS -->
+                    </div>
+
+                    <div class="mt-10 md:mt-12 relative z-20 w-full sm:w-auto">
+                        <a href="#enlist" class="block sm:inline-block w-full sm:w-auto text-center cursor-pointer bg-carbon border-2 border-gold-primary text-gold-primary hover:bg-gold-primary hover:text-black font-bold py-4 px-6 md:px-10 text-xs md:text-base uppercase tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)]">
+                            Инициировать Рапорт
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 STEP 1: COMMANDER PROFILE
+                 ========================================== -->
+            <div class="tactical-bridge py-8 md:py-12 relative z-20 shadow-[0_5px_30px_rgba(212,175,55,0.15)] border-b-2 border-gold-primary bg-[#0a0a0a]">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-4 md:gap-6 text-center">
+                    <div class="bg-gold-primary text-black font-monumental text-3xl md:text-6xl px-8 md:px-12 py-2 md:py-4 uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] border-2 md:border-4 border-yellow-300">
+                        ШАГ 1
+                    </div>
+                    <p class="text-gold-primary text-sm sm:text-base md:text-xl font-terminal uppercase tracking-[0.1em] md:tracking-[0.15em] leading-relaxed max-w-3xl font-bold">
+                        Прежде чем вступить в строй, узнай, кто поведет тебя в бой. Изучи досье Командующего.
+                    </p>
+                    <a href="#commander" class="mt-2 inline-block cursor-pointer hover:scale-125 transition-transform duration-300 relative z-30 p-2" aria-label="Перейти к досье">
+                        <i class="fa-solid fa-angles-down text-gold-primary text-3xl md:text-4xl animate-bounce drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <section id="commander" class="py-16 md:py-32 bg-carbon border-b border-steel relative">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row gap-8 md:gap-12 items-stretch">
+                    
+                    <!-- Photo Container -->
+                    <div class="w-full md:w-5/12 flex justify-center">
+                        <div class="relative w-full max-w-[320px] md:max-w-[400px] aspect-[4/5] border border-steel/50 shadow-[0_0_30px_rgba(0,0,0,0.8)] overflow-hidden bg-black">
+                            <div class="absolute inset-2 md:inset-3 border-gold-dim pointer-events-none z-30 flex justify-between flex-col">
+                                <div class="flex justify-between"><div class="w-3 h-3 md:w-4 md:h-4 border-t-2 border-l-2"></div><div class="w-3 h-3 md:w-4 md:h-4 border-t-2 border-r-2"></div></div>
+                                <div class="flex justify-between"><div class="w-3 h-3 md:w-4 md:h-4 border-b-2 border-l-2"></div><div class="w-3 h-3 md:w-4 md:h-4 border-b-2 border-r-2"></div></div>
+                            </div>
+
+                            <div class="scanner-line"></div>
+                            
+                            <!-- ФИКС: Скрываем тяжелый радар на мобилках (hidden md:flex) -->
+                            <div class="absolute inset-0 opacity-40 pointer-events-none z-20 hidden md:flex mix-blend-screen items-center justify-center scale-75 md:scale-100">
+                                <div class="w-64 h-64 border border-gold-primary rounded-full absolute"></div>
+                                <div class="w-48 h-48 border border-gold-primary/50 rounded-full absolute"></div>
+                                <div class="w-32 h-32 border border-gold-primary/20 rounded-full absolute"></div>
+                                <div class="w-px h-full bg-gold-primary/20 absolute"></div>
+                                <div class="h-px w-full bg-gold-primary/20 absolute"></div>
+                            </div>
+
+                            <!-- ФИКС: Тяжелые фильтры применяем только на десктопах -->
+                            <img src="https://i.ibb.co/spxRKZPr/image.png" alt="Генерал Гусь" class="w-full h-full object-cover object-top relative z-10 opacity-90 md:filter md:contrast-125 md:brightness-90 md:grayscale-[10%]">
+                            
+                            <div class="absolute bottom-0 inset-x-0 p-3 md:p-4 flex flex-col gap-2 z-30 bg-gradient-to-t from-black via-black/80 to-transparent pt-12 md:pt-16">
+                                <div class="border border-green-900 bg-green-950/80 p-2 text-center shadow-[0_0_15px_rgba(0,255,65,0.1)] text-terminal-green font-bold text-[9px] md:text-xs tracking-widest uppercase">
+                                    Личность Подтверждена
+                                </div>
+                                <div class="border border-red-900 bg-red-950/80 p-2 text-center shadow-[0_0_15px_rgba(138,3,3,0.2)] text-blood font-bold text-[9px] md:text-xs tracking-widest uppercase animate-pulse">
+                                    Абсолютный [ОМЕГА]
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Data -->
+                    <div class="w-full md:w-7/12 flex flex-col justify-center text-center md:text-left mt-6 md:mt-0">
+                        <span class="text-[9px] md:text-[10px] text-gold-dim border border-gold-dim/50 px-2 py-1 inline-block mb-3 md:mb-4 uppercase tracking-widest w-max mx-auto md:mx-0 font-terminal">Личное дело Командующего</span>
+                        <h2 class="text-4xl sm:text-5xl md:text-6xl font-monumental text-white mb-2 tracking-wider uppercase">Генерал-Гусь</h2>
+                        <div class="text-[10px] md:text-xs text-gray-500 tracking-[0.1em] md:tracking-[0.2em] mb-6 md:mb-8 uppercase border-b border-steel pb-4 font-terminal">Уровень угрозы: Критический | Код: Омега</div>
+                        
+                        <div class="space-y-4 md:space-y-6 text-xs md:text-sm text-gray-400 leading-relaxed font-terminal text-left">
+                            <p>Кадровый офицер водоплавающих сил. Ветеран изматывающих кампаний за стратегическую высоту "Крыльцо". Спланировал и осуществил историческую деблокаду сарая, прорвав оцепление через зону поражения поливочного шланга.</p>
+                            <p>Автор фундаментальной военной доктрины: <span class="text-gold-primary font-bold">«Ударил клювом — тактически отступай в лужу»</span>.</p>
+                            <p>Под его жестким командованием уровень дисциплины во дворе достиг беспрецедентных высот: коты передвигаются исключительно ползком, а выдача хлеба со стороны гражданских производится строго по утвержденному графику.</p>
+                            
+                            <blockquote class="border-l-2 border-blood pl-4 mt-6 italic text-gray-300 bg-obsidian p-4 text-[11px] md:text-sm">
+                                "Каждое зерно кукурузы — это ресурс государственной важности. Каждая собака — это цель. Право на двор нужно вырывать вместе с клоками шерсти врага."
+                            </blockquote>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 STEP 2: TACTICAL MAP
+                 ========================================== -->
+            <div class="tactical-bridge py-8 md:py-12 relative z-20 shadow-[0_5px_30px_rgba(212,175,55,0.15)] border-b-2 border-gold-primary bg-[#0a0a0a]">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-4 md:gap-6 text-center">
+                    <div class="bg-gold-primary text-black font-monumental text-3xl md:text-6xl px-8 md:px-12 py-2 md:py-4 uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] border-2 md:border-4 border-yellow-300">
+                        ШАГ 2
+                    </div>
+                    <p class="text-gold-primary text-sm sm:text-base md:text-xl font-terminal uppercase tracking-[0.1em] md:tracking-[0.15em] leading-relaxed max-w-3xl font-bold">
+                        Командир авторитетен, доктрина ясна. Теперь изучи территорию. Где конкретно мы будем воевать?
+                    </p>
+                    <a href="#map" class="mt-2 inline-block cursor-pointer hover:scale-125 transition-transform duration-300 relative z-30 p-2" aria-label="Перейти к карте">
+                        <i class="fa-solid fa-angles-down text-gold-primary text-3xl md:text-4xl animate-bounce drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <section id="map" class="py-16 md:py-32 bg-[#080808] border-b border-steel relative">
+                <div class="max-w-7xl mx-auto px-4">
+                    <header class="mb-6 md:mb-8 border-b border-steel pb-4 flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4">
+                        <div>
+                            <h2 class="text-2xl md:text-4xl font-monumental text-white tracking-[0.1em] uppercase">Тактическая Карта ТВД</h2>
+                            <p class="font-terminal text-[10px] md:text-xs text-gray-500 uppercase mt-2">Сектор ответственности "Двор" | Интерактивный план (Нажми на зону)</p>
+                        </div>
+                        <span class="text-[9px] md:text-[10px] text-terminal-green uppercase border border-terminal-green/30 px-2 py-1 bg-green-950/20 font-terminal">Спутник Онлайн</span>
+                    </header>
+
+                    <div class="relative w-full aspect-video md:aspect-[21/9] bg-[#0a0a0a] border border-steel shadow-2xl rounded-sm overflow-hidden">
+                        <svg viewBox="0 0 1000 450" class="w-full h-full" preserveAspectRatio="xMidYMid meet" id="map-svg">
+                            <defs>
+                                <pattern id="forest-pattern" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="15" cy="15" r="3" fill="none" stroke="#22543d" stroke-width="1.5" opacity="0.6"/><circle cx="15" cy="15" r="1" fill="#22543d" opacity="0.8"/></pattern>
+                                <pattern id="swamp-pattern" width="40" height="15" patternUnits="userSpaceOnUse"><path d="M0,7 Q10,2 20,7 T40,7" fill="none" stroke="#3f3f46" stroke-width="1" opacity="0.4"/></pattern>
+                                <pattern id="corn-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M10,5 v10 M5,10 h10" fill="none" stroke="#166534" stroke-width="1" opacity="0.4"/></pattern>
+                                <pattern id="water-pattern" width="40" height="15" patternUnits="userSpaceOnUse"><path d="M0,7 Q10,2 20,7 T40,7" fill="none" stroke="#1e3a8a" stroke-width="1.5" opacity="0.5"/></pattern>
+                                <pattern id="danger-hatch" width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="10" stroke="#7f1d1d" stroke-width="1.5" opacity="0.7"/></pattern>
+                            </defs>
+
+                            <g opacity="0.1" stroke="#ffffff" stroke-width="0.5">
+                                <path d="M0,50 h1000 M0,100 h1000 M0,150 h1000 M0,200 h1000 M0,250 h1000 M0,300 h1000 M0,350 h1000 M0,400 h1000 M0,450 h1000 M0,500 h1000"/>
+                                <path d="M50,0 v1000 M100,0 v1000 M150,0 v1000 M200,0 v1000 M250,0 v1000 M300,0 v1000 M350,0 v1000 M400,0 v1000 M450,0 v1000 M500,0 v1000 M550,0 v1000 M600,0 v1000 M650,0 v1000 M700,0 v1000 M750,0 v1000 M800,0 v1000 M850,0 v1000 M900,0 v1000 M950,0 v1000"/>
+                            </g>
+
+                            <g class="group cursor-crosshair focus:outline-none" tabindex="0">
+                                <path d="M220,200 C150,140 380,100 450,180 C520,260 300,320 220,200 Z" fill="url(#water-pattern)" stroke="#3b82f6" stroke-width="2"/>
+                                <circle cx="340" cy="190" r="15" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.5"/>
+                                <g class="opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                    <rect x="50" y="70" width="300" height="110" fill="#0a0a0a" stroke="#3b82f6" stroke-width="2"/>
+                                    <text x="60" y="95" fill="#60a5fa" font-size="16" font-family="monospace" font-weight="bold">Генштаб: ОБЪЕКТ "ЛУЖА"</text>
+                                    <text x="60" y="120" fill="#a1a1aa" font-size="14" font-family="monospace">Безопасная водная преграда.</text>
+                                    <text x="60" y="140" fill="#a1a1aa" font-size="14" font-family="monospace">Зона тактической перегруппировки.</text>
+                                    <text x="60" y="160" fill="#a1a1aa" font-size="14" font-family="monospace">Здесь ты будешь в безопасности.</text>
+                                </g>
+                            </g>
+
+                            <g class="group cursor-crosshair focus:outline-none" tabindex="0">
+                                <rect x="120" y="300" width="160" height="100" fill="url(#corn-pattern)" stroke="#166534" stroke-width="2"/>
+                                <polygon points="200,360 206,372 194,372" fill="#22c55e"/>
+                                <g class="opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                    <rect x="250" y="280" width="280" height="90" fill="#0a0a0a" stroke="#22c55e" stroke-width="2"/>
+                                    <text x="260" y="305" fill="#22c55e" font-size="16" font-family="monospace" font-weight="bold">Сектор Снабжения: ГРЯДКА</text>
+                                    <text x="260" y="330" fill="#a1a1aa" font-size="14" font-family="monospace">Главный источник энергии.</text>
+                                    <text x="260" y="350" fill="#a1a1aa" font-size="14" font-family="monospace">Именно за это мы воюем.</text>
+                                </g>
+                            </g>
+
+                            <g class="group cursor-crosshair focus:outline-none" tabindex="0">
+                                <circle cx="700" cy="180" r="140" fill="#ef4444" opacity="0.05"/>
+                                <circle cx="700" cy="180" r="140" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="5 5"/>
+                                <rect x="660" y="130" width="80" height="80" fill="url(#danger-hatch)" stroke="#ef4444" stroke-width="2"/>
+                                <path d="M685,170 h30 v40 h-30 z" fill="#000"/>
+                                <circle cx="700" cy="160" r="4" fill="#ef4444"/>
+                                <g class="opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                    <rect x="400" y="20" width="310" height="120" fill="#0a0a0a" stroke="#ef4444" stroke-width="2"/>
+                                    <text x="410" y="45" fill="#ef4444" font-size="16" font-family="monospace" font-weight="bold">Критическая Угроза: "ЦЕПЬ"</text>
+                                    <text x="410" y="70" fill="#a1a1aa" font-size="14" font-family="monospace">Вражеский юнит (Пёс).</text>
+                                    <text x="410" y="90" fill="#a1a1aa" font-size="14" font-family="monospace">Красная зона — радиус челюстей.</text>
+                                    <text x="410" y="110" fill="#a1a1aa" font-size="14" font-family="monospace">Мишень для акустического удара.</text>
+                                </g>
+                            </g>
+
+                            <g class="group cursor-crosshair focus:outline-none" tabindex="0">
+                                <path d="M750,330 L880,330 L880,380 L920,380 L920,440 L750,440 Z" fill="#171717" stroke="#b45309" stroke-width="1.5"/>
+                                <polygon points="785,355 790,360 785,365 780,360" fill="#d97706"/>
+                                <g class="opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300 pointer-events-none">
+                                    <rect x="430" y="320" width="310" height="110" fill="#0a0a0a" stroke="#d97706" stroke-width="2"/>
+                                    <text x="440" y="345" fill="#d97706" font-size="16" font-family="monospace" font-weight="bold">Нейтральная Зона: ДОМ</text>
+                                    <text x="440" y="370" fill="#a1a1aa" font-size="14" font-family="monospace">Место выдачи хлеба (Двуногие).</text>
+                                    <text x="440" y="390" fill="#a1a1aa" font-size="14" font-family="monospace">Тактика: шумовое давление</text>
+                                    <text x="440" y="410" fill="#a1a1aa" font-size="14" font-family="monospace">для стимуляции выдачи пайка.</text>
+                                </g>
+                            </g>
+
+                            <path d="M340,190 Q280,260 200,360" fill="none" stroke="#22c55e" stroke-width="1.5" class="marching-ants" opacity="0.7"/>
+                            <path d="M340,190 Q450,280 600,320 T785,360" fill="none" stroke="#d97706" stroke-width="1.5" class="marching-ants" opacity="0.7"/>
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 STEP 3: EVIDENCE ARCHIVE
+                 ========================================== -->
+            <div class="tactical-bridge py-8 md:py-12 relative z-20 shadow-[0_5px_30px_rgba(212,175,55,0.15)] border-b-2 border-gold-primary bg-[#0a0a0a]">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-4 md:gap-6 text-center">
+                    <div class="bg-gold-primary text-black font-monumental text-3xl md:text-6xl px-8 md:px-12 py-2 md:py-4 uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] border-2 md:border-4 border-yellow-300">
+                        ШАГ 3
+                    </div>
+                    <p class="text-gold-primary text-sm sm:text-base md:text-xl font-terminal uppercase tracking-[0.1em] md:tracking-[0.15em] leading-relaxed max-w-3xl font-bold">
+                        План выглядит опасно. Способны ли мы победить собаку и людей? Смотри неопровержимые доказательства.
+                    </p>
+                    <a href="#archive" class="mt-2 inline-block cursor-pointer hover:scale-125 transition-transform duration-300 relative z-30 p-2" aria-label="Перейти к архиву">
+                        <i class="fa-solid fa-angles-down text-gold-primary text-3xl md:text-4xl animate-bounce drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <section id="archive" class="py-16 md:py-20 bg-obsidian border-b border-steel">
+                <div class="max-w-6xl mx-auto px-4">
+                    <header class="text-center mb-10 md:mb-12">
+                        <h2 class="text-3xl md:text-5xl font-monumental text-white uppercase tracking-widest mb-2 md:mb-4">Архив Фотофиксации</h2>
+                        <p class="font-terminal text-[10px] md:text-xs text-gray-500 uppercase tracking-[0.3em]">Материалы только для клюва</p>
+                    </header>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8" id="archive-grid">
+                        <!-- Photo cards populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 STEP 4: HIERARCHY
+                 ========================================== -->
+            <div class="tactical-bridge py-8 md:py-12 relative z-20 shadow-[0_5px_30px_rgba(212,175,55,0.15)] border-b-2 border-gold-primary bg-[#0a0a0a]">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-4 md:gap-6 text-center">
+                    <div class="bg-gold-primary text-black font-monumental text-3xl md:text-6xl px-8 md:px-12 py-2 md:py-4 uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] border-2 md:border-4 border-yellow-300">
+                        ШАГ 4
+                    </div>
+                    <p class="text-gold-primary text-sm sm:text-base md:text-xl font-terminal uppercase tracking-[0.1em] md:tracking-[0.15em] leading-relaxed max-w-3xl font-bold">
+                        Окей, мы побеждаем и забираем еду. А что конкретно получишь лично ты, если вступишь в наши ряды?
+                    </p>
+                    <a href="#hierarchy" class="mt-2 inline-block cursor-pointer hover:scale-125 transition-transform duration-300 relative z-30 p-2" aria-label="Перейти к иерархии">
+                        <i class="fa-solid fa-angles-down text-gold-primary text-3xl md:text-4xl animate-bounce drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <section id="hierarchy" class="py-16 md:py-32 bg-carbon border-b border-steel relative overflow-hidden">
+                <div class="max-w-4xl mx-auto px-4 relative z-10">
+                    <header class="text-center mb-12 md:mb-16">
+                        <h2 class="text-3xl md:text-5xl font-monumental text-white tracking-[0.1em] mb-2 md:mb-4 uppercase">Пищевая Цепь ВВС</h2>
+                        <p class="font-terminal text-[10px] md:text-xs text-gray-500 uppercase tracking-[0.2em] md:tracking-[0.3em]">Твоя карьерная лестница и гарантии выживания</p>
+                    </header>
+
+                    <div class="relative border-l-2 border-gold-dim/30 ml-2 sm:ml-4 md:ml-8 space-y-8 md:space-y-12 pb-8" id="hierarchy-list">
+                       <!-- Hierarchy items populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 STEP 5: BRIEFING (FAQ)
+                 ========================================== -->
+            <div class="tactical-bridge py-8 md:py-12 relative z-20 shadow-[0_5px_30px_rgba(212,175,55,0.15)] border-b-2 border-gold-primary bg-[#0a0a0a]">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-4 md:gap-6 text-center">
+                    <div class="bg-gold-primary text-black font-monumental text-3xl md:text-6xl px-8 md:px-12 py-2 md:py-4 uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] border-2 md:border-4 border-yellow-300">
+                        ШАГ 5
+                    </div>
+                    <p class="text-gold-primary text-sm sm:text-base md:text-xl font-terminal uppercase tracking-[0.1em] md:tracking-[0.15em] leading-relaxed max-w-3xl font-bold">
+                        Привилегии отличные. Но у тебя остались сомнения и страхи. Вдруг тебя сожрут? Отвечаем прямо.
+                    </p>
+                    <a href="#faq" class="mt-2 inline-block cursor-pointer hover:scale-125 transition-transform duration-300 relative z-30 p-2" aria-label="Перейти к брифингу">
+                        <i class="fa-solid fa-angles-down text-gold-primary text-3xl md:text-4xl animate-bounce drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <section id="faq" class="py-16 md:py-32 bg-obsidian border-b border-steel relative overflow-hidden">
+                <div class="max-w-3xl mx-auto px-4 relative z-10">
+                    <header class="text-center mb-10 md:mb-12">
+                        <h2 class="text-3xl md:text-5xl font-monumental text-white tracking-[0.1em] mb-2 md:mb-4 uppercase">Тактический Брифинг</h2>
+                        <p class="font-terminal text-[10px] md:text-xs text-gray-500 uppercase tracking-[0.2em] md:tracking-[0.3em]">Интерактивный разбор сценариев угрозы</p>
+                    </header>
+
+                    <div class="relative bg-carbon border border-steel shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden rounded-sm">
+                        <!-- Carousel Track -->
+                        <div id="briefing-carousel" class="flex overflow-x-hidden snap-x snap-mandatory scroll-smooth hide-scroll">
+                            <!-- Briefing cards populated by JS -->
+                        </div>
+
+                        <!-- Carousel Controls -->
+                        <div class="flex justify-between items-center bg-[#0a0a0a] border-t border-steel px-4 md:px-6 py-3 md:py-4">
+                            <button id="btn-prev" class="w-8 h-8 md:w-10 md:h-10 border border-steel rounded-sm flex items-center justify-center text-gray-400 hover:text-gold-primary hover:border-gold-primary transition-colors focus:outline-none cursor-pointer" aria-label="Предыдущий сценарий">
+                                <i class="fa-solid fa-chevron-left text-xs md:text-sm"></i>
+                            </button>
+                            
+                            <div id="carousel-dots" class="flex gap-2 md:gap-3">
+                                <!-- Dots populated by JS -->
+                            </div>
+                            
+                            <button id="btn-next" class="w-8 h-8 md:w-10 md:h-10 border border-steel rounded-sm flex items-center justify-center text-gray-400 hover:text-gold-primary hover:border-gold-primary transition-colors focus:outline-none cursor-pointer" aria-label="Следующий сценарий">
+                                 <i class="fa-solid fa-chevron-right text-xs md:text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 STEP 6: ENLISTMENT
+                 ========================================== -->
+            <div class="tactical-bridge py-8 md:py-12 relative z-20 shadow-[0_5px_30px_rgba(212,175,55,0.15)] border-b-2 border-gold-primary bg-[#0a0a0a]">
+                <div class="max-w-6xl mx-auto px-4 flex flex-col items-center justify-center gap-4 md:gap-6 text-center">
+                    <div class="bg-gold-primary text-black font-monumental text-3xl md:text-6xl px-8 md:px-12 py-2 md:py-4 uppercase tracking-widest shadow-[0_0_30px_rgba(212,175,55,0.6)] border-2 md:border-4 border-yellow-300">
+                        ШАГ 6
+                    </div>
+                    <p class="text-gold-primary text-sm sm:text-base md:text-xl font-terminal uppercase tracking-[0.1em] md:tracking-[0.15em] leading-relaxed max-w-3xl font-bold">
+                        Возражений не осталось. Выбор: либо элита, либо объедки. Пора подписывать бумаги.
+                    </p>
+                    <a href="#enlist" class="mt-2 inline-block cursor-pointer hover:scale-125 transition-transform duration-300 relative z-30 p-2" aria-label="Перейти к рапорту">
+                        <i class="fa-solid fa-angles-down text-gold-primary text-3xl md:text-4xl animate-bounce drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"></i>
+                    </a>
+                </div>
+            </div>
+
+            <section id="enlist" class="py-16 md:py-24 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')] bg-[#080908] relative border-t-4 border-gold-primary">
+                <div class="max-w-3xl mx-auto px-4">
+                    <header class="text-center mb-8 md:mb-12">
+                        <h2 class="text-3xl md:text-5xl font-monumental text-white mb-2 uppercase tracking-widest">Официальный Рапорт</h2>
+                        <p class="text-gold-dim text-[10px] md:text-xs font-terminal uppercase tracking-[0.2em]">Форма зачисления в ВВС Двора</p>
+                    </header>
+
+                    <form id="enlistment-form" class="space-y-6 md:space-y-8 bg-carbon border border-steel p-6 md:p-12 shadow-2xl relative rounded-sm">
+                        <div class="absolute inset-2 border-gold-dim pointer-events-none flex justify-between flex-col">
+                             <div class="flex justify-between"><div class="w-3 h-3 md:w-4 md:h-4 border-t border-l"></div><div class="w-3 h-3 md:w-4 md:h-4 border-t border-r"></div></div>
+                             <div class="flex justify-between"><div class="w-3 h-3 md:w-4 md:h-4 border-b border-l"></div><div class="w-3 h-3 md:w-4 md:h-4 border-b border-r"></div></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 relative z-10">
+                            <div>
+                                <label for="callsign" class="block text-xs md:text-sm text-gray-300 font-bold font-terminal mb-2 uppercase tracking-widest">Позывной *</label>
+                                <input type="text" id="callsign" placeholder="Прим: Бешеный клюв" required maxlength="40" pattern="[A-Za-zА-Яа-яЁё0-9\-\s]+" class="w-full bg-obsidian border border-steel text-white px-4 py-3 focus:outline-none focus:border-gold-primary transition-colors text-xs md:text-sm font-terminal rounded-none placeholder-gray-600">
+                            </div>
+                            <div>
+                                <label for="wingspan" class="block text-xs md:text-sm text-gray-300 font-bold font-terminal mb-2 uppercase tracking-widest">Размах крыльев (см)</label>
+                                <input type="number" id="wingspan" placeholder="Напр: 150" min="50" max="350" class="w-full bg-obsidian border border-steel text-white px-4 py-3 focus:outline-none focus:border-gold-primary transition-colors text-xs md:text-sm font-terminal rounded-none placeholder-gray-600">
+                            </div>
+                        </div>
+
+                        <div class="relative z-10">
+                            <label for="specialization" class="block text-xs md:text-sm text-gray-300 font-bold font-terminal mb-2 uppercase tracking-widest">Военно-учетная специальность *</label>
+                            <select id="specialization" required class="w-full bg-obsidian border border-steel text-white px-3 md:px-4 py-3 focus:outline-none focus:border-gold-primary transition-colors text-[10px] md:text-sm font-terminal appearance-none rounded-none cursor-pointer">
+                                <option value="">-- Выбрать специализацию --</option>
+                                <option value="infantry">Штурмовой пехотинец (Щипач-авангард)</option>
+                                <option value="recon">Разведчик-диверсант (За забором)</option>
+                                <option value="support">Оператор шумовых установок (Гогот)</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-start gap-3 md:gap-4 border-t border-steel pt-6 mt-6 relative z-10">
+                            <input type="checkbox" id="terms" required class="mt-0.5 md:mt-1 bg-obsidian border-steel text-gold-primary focus:ring-0 rounded-none w-4 h-4 cursor-pointer shrink-0">
+                            <label for="terms" class="text-[10px] md:text-xs text-gray-300 font-terminal uppercase leading-relaxed tracking-wider cursor-pointer font-bold">
+                                Я клянусь беспрекословно следовать Доктрине. Осознаю, что дезертирство карается трибуналом и лишением пуха. Право на двор принадлежит нам.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="w-full bg-transparent border-2 border-gold-primary hover:bg-gold-primary hover:text-black text-gold-primary font-bold py-5 md:py-6 px-4 md:px-8 text-xl md:text-2xl uppercase tracking-[0.3em] md:tracking-[0.4em] transition-all font-monumental cursor-pointer relative z-10 shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_30px_rgba(212,175,55,0.4)]">
+                            КЛЮНУТЬ
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+
+        <!-- ==========================================
+             FOOTER
+             ========================================== -->
+        <footer class="bg-[#050505] border-t border-steel pt-12 md:pt-16 pb-8 w-full overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-8 md:mb-12 border-b border-steel pb-8 md:pb-12 text-center md:text-left">
+                    
+                    <div>
+                        <div class="flex items-center justify-center md:justify-start gap-3 mb-4 md:mb-6">
+                            <div class="w-5 h-5 md:w-6 md:h-6 border border-gold-primary flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-feather-pointed text-gold-primary text-[8px] md:text-[10px]"></i>
+                            </div>
+                            <span class="font-monumental text-white tracking-[0.2em] uppercase text-sm md:text-base">ГК ВВС ДВОРА</span>
+                        </div>
+                        <p class="text-[9px] md:text-[10px] text-gray-600 font-terminal leading-relaxed uppercase tracking-widest">Информация на данном терминале классифицирована как "ТОЛЬКО ДЛЯ КЛЮВА". Несанкционированный доступ карается шипением.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-gold-dim font-bold font-terminal mb-4 md:mb-6 uppercase text-[9px] md:text-[10px] tracking-widest border-b border-steel pb-2 inline-block">Навигация Штаба</h4>
+                        <ul class="space-y-2 md:space-y-3 text-[10px] md:text-xs font-terminal">
+                            <li><a href="#commander" class="text-gray-500 hover:text-gold-primary transition-colors">Личное дело</a></li>
+                            <li><a href="#map" class="text-gray-500 hover:text-gold-primary transition-colors">Тактическая Карта</a></li>
+                            <li><a href="#faq" class="text-gray-500 hover:text-gold-primary transition-colors">База Знаний</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-gold-dim font-bold font-terminal mb-4 md:mb-6 uppercase text-[9px] md:text-[10px] tracking-widest border-b border-steel pb-2 inline-block">Связь с базой</h4>
+                        <ul class="space-y-2 md:space-y-3 text-[9px] md:text-[10px] text-gray-500 font-terminal uppercase tracking-widest">
+                            <li><i class="fa-solid fa-location-dot mr-2 text-gold-dim"></i> Сектор 4 (Третья лужа)</li>
+                            <li><i class="fa-solid fa-clock mr-2 text-gold-dim"></i> Режим: С рассвета</li>
+                            <li><i class="fa-solid fa-tower-broadcast mr-2 text-gold-dim"></i> Радио: ГА-ГА-1</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="text-center text-[8px] md:text-[9px] text-gray-700 font-terminal uppercase tracking-widest px-4">
+                &copy; 2026 Главное Командование Военно-Водоплавающих Сил. Все права защищены.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Модалки (Сплошной фон без блюра на мобилках) -->
+    <div id="success-modal" class="fixed inset-0 bg-black/95 z-[120] hidden flex items-center justify-center p-4">
+        <div class="bg-carbon border border-gold-primary p-6 md:p-8 w-full max-w-sm mx-auto text-center shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+            <i class="fa-solid fa-check text-4xl text-terminal-green mb-4"></i>
+            <h3 class="text-lg md:text-xl font-monumental text-white mb-2 uppercase">Рапорт Принят</h3>
+            <p class="text-gray-500 text-[10px] md:text-xs font-terminal mb-6 uppercase tracking-widest">Ожидайте сигнала (громкое гоготание) для начала сборов.</p>
+            <button id="close-modal" class="bg-gold-primary text-black font-bold py-2 px-6 text-xs font-terminal uppercase tracking-widest hover:bg-yellow-400 transition-colors cursor-pointer w-full md:w-auto">
+                Вольно
+            </button>
+        </div>
+    </div>
+
+    <div id="cta-modal" class="fixed inset-0 bg-black/95 z-[110] hidden flex items-center justify-center p-4 transition-opacity duration-500">
+        <div class="bg-carbon border-2 border-blood p-6 md:p-8 max-w-lg w-full mx-auto relative shadow-[0_0_100px_rgba(138,3,3,0.4)] overflow-hidden text-center">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,3,3,0.1)_0%,transparent_70%)] pointer-events-none"></div>
+            
+            <div class="relative z-10">
+                <div class="w-12 h-12 md:w-16 md:h-16 bg-red-950/50 border border-red-600 text-red-500 flex items-center justify-center mx-auto mb-4 md:mb-6 animate-pulse">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl md:text-3xl"></i>
+                </div>
+                <h3 class="text-lg md:text-2xl font-monumental text-white mb-2 uppercase tracking-widest">ВНИМАНИЕ ОПЕРИВШИЙСЯ!</h3>
+                <div class="h-px w-16 md:w-24 bg-red-600 mx-auto mb-4 md:mb-6"></div>
+                <p class="font-terminal text-gray-300 text-[9px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.2em] leading-relaxed mb-4 md:mb-6">
+                    Системы зафиксировали твое присутствие в штабе. Твой пух дрожит, но клюв должен быть твердым. 
+                </p>
+                <p class="font-terminal text-red-500 font-bold text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] mb-8 md:mb-10">
+                    ГЛАВНОКОМАНДОВАНИЕ ОЖИДАЕТ ТВОЙ РАПОРТ.
+                </p>
+                
+                <div class="flex flex-col gap-3 md:gap-4">
+                    <button id="cta-accept" class="bg-blood text-white font-terminal font-bold py-3 md:py-4 px-4 md:px-6 text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-red-800 transition-colors shadow-[0_0_20px_rgba(138,3,3,0.6)] cursor-pointer w-full">
+                        ВСТУПИТЬ В ВВС
+                    </button>
+                    <button id="cta-decline" class="bg-transparent border border-steel text-gray-600 font-terminal py-2 px-4 md:px-6 text-[8px] md:text-[9px] uppercase tracking-[0.1em] md:tracking-[0.2em] hover:text-gray-300 hover:border-gray-500 transition-colors cursor-pointer w-full">
+                        Сдаться Голубям
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         APPLICATION LOGIC
+         ========================================== -->
+    <script>
+        try {
+            document.addEventListener('DOMContentLoaded', () => {
+
+                // 1. БД: Тексты и Контент
+                const statsData = [
+                    { val: 14, label: "Успешных щипков" },
+                    { val: 3, label: "Захвачено грядок" },
+                    { val: 89, label: "% Контроля лужи" },
+                    { val: 32, label: "Деморализованных псов", isDanger: true }
+                ];
+
+                const archiveData = [
+                    {
+                        img: "https://i.ibb.co/Wv20yZn5/Gemini-Generated-Image-9xmkkf9xmkkf9xmk.png",
+                        title: "ОПЕРАЦИЯ «ГРЯЗНЫЙ ХВОСТ»",
+                        desc: "Размытое фото убегающего пса. Противник полностью деморализован массированным акустическим ударом и с позором отступает в будку. Угроза нейтрализована.",
+                        tag: "TARGET RETREATING",
+                        coord: "17.39.29.37°N",
+                        isSuccess: false
+                    },
+                    {
+                        img: "https://i.ibb.co/C5pKVCWG/Gemini-Generated-Image-wak2abwak2abwak2.png",
+                        title: "ПЕРЕХВАТ ПРОВИАНТА",
+                        desc: "Фиксация захвата миски с замоченным хлебом. Обратите внимание на задний план: гражданские лица в страхе оттеснены за периметр веранды. Ресурс под нашим контролем.",
+                        tag: "ASSET SECURED",
+                        coord: "17.39.33.37°N",
+                        isSuccess: true
+                    }
+                ];
+
+                const hierarchyData = [
+                    {
+                        rank: "Ранг 01: Новобранец", title: "Рядовой Щипач",
+                        desc: "Базовая боевая единица. Как только ты подпишешь рапорт, ты перестанешь быть одиночкой и получишь доступ к ресурсам стаи.",
+                        privilege: "Доступ к краю лужи. Гарантированный базовый паек. Стая защитит тебя от посягательств соседских котов.",
+                        level: "base"
+                    },
+                    {
+                        rank: "Ранг 02", title: "Ефрейтор-Перехватчик",
+                        desc: "Элита авангарда. Маневренный бой на подступах к веранде.",
+                        privilege: "Право первого укуса свежего хлеба. Выделенное VIP-место в центре лужи.",
+                        level: "mid"
+                    },
+                    {
+                        rank: "Ранг 03 (Высший)", title: "Командир Рубежа",
+                        desc: "Абсолютное доминирование. Жесткий контроль периметра.",
+                        privilege: "Неприкосновенность. Личный камень для сушки перьев. Право шипеть на гражданских без приказа.",
+                        level: "top"
+                    }
+                ];
+
+                const briefingData = [
+                    {
+                        code: "Цепь", type: "danger", title: "А если у пса сорвется цепь?",
+                        text: "ВВС применяет тактику «Клин». Формируем шумовую завесу (гогот 120 дБ) и организованно отступаем в лужу. Собаки не умеют вести морской бой. Своих не бросаем.",
+                        svg: `<circle cx="200" cy="100" r="40" fill="none" stroke="#ef4444" stroke-width="1" class="animate-ping" style="animation-duration: 3s;" /><circle cx="200" cy="100" r="80" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 4"/><circle cx="200" cy="100" r="120" fill="none" stroke="#991b1b" stroke-width="1" /><path d="M 180 80 h 40 v 40 h -40 z" fill="#450a0a" stroke="#ef4444" stroke-width="2" /><path d="M 195 120 v -20 h 10 v 20 z" fill="#000" /><circle cx="200" cy="105" r="3" fill="#ef4444" />`
+                    },
+                    {
+                        code: "Акустика", type: "warning", title: "Мой клюв уже не тот...",
+                        text: "Физическая сила — лишь один инструмент. Нам критически нужны операторы акустических установок (громкое шипение из-под куста) и дозорные. Место в строю найдется каждому.",
+                        svg: `<pattern id="grid-bg-2" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#d4af37" stroke-width="0.2" opacity="0.3"/></pattern><rect width="100%" height="100%" fill="url(#grid-bg-2)" /><rect x="120" y="60" width="10" height="80" fill="#d4af37" class="animate-pulse"/><rect x="160" y="40" width="10" height="120" fill="#d4af37" class="animate-pulse" style="animation-delay: 0.2s;"/><rect x="200" y="20" width="10" height="160" fill="#d4af37" class="animate-pulse" style="animation-delay: 0.4s;"/><rect x="240" y="60" width="10" height="80" fill="#d4af37" class="animate-pulse" style="animation-delay: 0.6s;"/>`
+                    },
+                    {
+                        code: "Изгнание", type: "neutral", title: "Что будет, если откажусь?",
+                        text: "Отказ карается позором. Ты потеряешь право на кукурузу и будешь питаться объедками после голубей. Вечный страх перед поливочным шлангом станет твоей нормой. Выбор за тобой.",
+                        svg: `<pattern id="grid-bg-3" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 40 M 0 0 L 40 40" fill="none" stroke="#374151" stroke-width="1" opacity="0.5"/></pattern><rect width="100%" height="100%" fill="url(#grid-bg-3)" /><text x="200" y="105" fill="#ef4444" font-family="monospace" font-size="24" font-weight="bold" text-anchor="middle" letter-spacing="6" class="animate-pulse">NO SIGNAL</text>`
+                    }
+                ];
+
+                // 2. Рендер компонентов
+                const statsContainer = document.getElementById('stats-container');
+                if(statsContainer){
+                    statsContainer.innerHTML = statsData.map(stat => `
+                        <div>
+                            <div class="text-3xl md:text-5xl font-monumental ${stat.isDanger ? 'text-blood' : 'text-white'} stat-counter" data-target="${stat.val}">0</div>
+                            <div class="text-[9px] md:text-xs ${stat.isDanger ? 'text-red-800' : 'text-gold-dim'} uppercase tracking-widest mt-1 md:mt-2">${stat.label}</div>
+                        </div>
+                    `).join('');
+                }
+
+                const archiveGrid = document.getElementById('archive-grid');
+                if(archiveGrid){
+                    archiveGrid.innerHTML = archiveData.map(item => `
+                        <div class="bg-carbon border border-steel p-3 md:p-4 flex flex-col">
+                            <div class="relative aspect-video bg-black flex items-center justify-center border border-steel overflow-hidden group rounded-sm">
+                                <div class="absolute top-2 left-2 md:top-3 md:left-3 flex items-center gap-1 md:gap-2 z-20">
+                                    <div class="w-1.5 h-1.5 md:w-2 md:h-2 bg-red-600 rounded-full animate-pulse shadow-[0_0_5px_#dc2626]"></div>
+                                    <span class="text-[8px] md:text-[10px] text-red-600 font-bold uppercase font-terminal tracking-wider drop-shadow-md">REC</span>
+                                </div>
+                                <div class="absolute bottom-2 right-2 md:bottom-3 md:right-3 text-[7px] md:text-[9px] ${item.isSuccess ? 'text-terminal-green bg-green-950/80 border-green-800' : 'text-gray-400 bg-black/70 border-gray-700'} z-20 font-terminal uppercase px-1.5 md:px-2 py-0.5 md:py-1 border">${item.tag}</div>
+                                <div class="absolute top-2 right-2 md:top-3 md:right-3 text-[7px] md:text-[9px] text-gray-500 z-20 font-terminal uppercase drop-shadow-md">${item.coord}</div>
+                                <div class="absolute inset-0 m-auto w-8 h-8 md:w-10 md:h-10 z-20 pointer-events-none opacity-40 group-hover:scale-75 transition-transform duration-500">
+                                    <svg viewBox="0 0 40 40" fill="none" stroke="#ffffff" stroke-width="1.5"><path d="M20 0v15M20 25v15M0 20h15M25 20h15"/></svg>
+                                </div>
+                                <div class="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] z-10 pointer-events-none"></div>
+                                <img src="${item.img}" alt="${item.title}" class="absolute inset-0 w-full h-full object-cover opacity-70 grayscale-[30%] group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 z-0">
+                            </div>
+                            <div class="mt-3 md:mt-4 flex-grow">
+                                <h4 class="text-gold-primary text-xs md:text-sm font-bold uppercase mb-1 font-terminal">${item.title}</h4>
+                                <p class="text-[10px] md:text-[11px] text-gray-400 leading-relaxed font-terminal">${item.desc}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                const hierarchyList = document.getElementById('hierarchy-list');
+                if(hierarchyList){
+                    hierarchyList.innerHTML = hierarchyData.map(h => {
+                        let indicatorClasses = "bg-obsidian border-2 border-steel group-hover:border-gold-primary group-hover:bg-gold-primary";
+                        let badgeClasses = "text-gold-dim border border-gold-dim/30";
+                        let titleClasses = "text-white";
+                        
+                        if(h.level === "top") {
+                            indicatorClasses = "bg-gold-primary border-2 border-gold-primary shadow-[0_0_10px_rgba(212,175,55,0.5)]";
+                            badgeClasses = "text-gold-primary border border-gold-primary/50 bg-gold-primary/10";
+                            titleClasses = "text-white drop-shadow-[0_0_5px_rgba(212,175,55,0.5)]";
+                        }
+
+                        return `
+                        <div class="relative pl-6 md:pl-12 group">
+                            <div class="absolute -left-[7px] md:-left-[9px] top-1 w-3 h-3 md:w-4 md:h-4 ${indicatorClasses} transition-colors flex items-center justify-center rotate-45"></div>
+                            <div class="text-[9px] md:text-[10px] uppercase tracking-widest font-terminal mb-2 inline-block px-2 py-0.5 ${badgeClasses}">${h.rank}</div>
+                            <h3 class="text-lg md:text-xl font-monumental mb-2 uppercase tracking-wider ${titleClasses}">${h.title}</h3>
+                            <p class="text-[10px] md:text-xs text-gray-400 font-terminal leading-relaxed mb-3">${h.desc}</p>
+                            <div class="bg-obsidian border border-steel p-2 md:p-3 text-[9px] md:text-[10px] text-gray-500 font-terminal">
+                                <span class="${h.level === 'top' ? 'text-blood' : 'text-gold-primary'} font-bold">ПРИВИЛЕГИИ:</span> ${h.privilege}
+                            </div>
+                        </div>
+                    `}).join('');
+                }
+
+                const briefingCarousel = document.getElementById('briefing-carousel');
+                const carouselDots = document.getElementById('carousel-dots');
+                if(briefingCarousel && carouselDots){
+                    briefingCarousel.innerHTML = briefingData.map(b => {
+                        let badgeBg = b.type === 'danger' ? 'bg-red-950/80 border-red-500/50 text-red-500' : 
+                                      b.type === 'warning' ? 'bg-yellow-950/80 border-yellow-500/50 text-gold-primary' : 
+                                      'bg-gray-900/80 border-gray-500/50 text-gray-400';
+                        return `
+                        <div class="w-full shrink-0 snap-center group flex flex-col relative border-r border-steel/20 last:border-0">
+                            <div class="h-40 md:h-56 relative bg-black border-b border-steel overflow-hidden flex items-center justify-center">
+                                <svg viewBox="0 0 400 200" class="absolute inset-0 w-full h-full opacity-60 group-hover:scale-105 transition-transform duration-700">
+                                    ${b.svg}
+                                </svg>
+                                <div class="absolute top-2 left-2 md:top-4 md:left-4 ${badgeBg} border text-[8px] md:text-[10px] font-terminal uppercase tracking-[0.2em] px-2 py-1 md:px-3 md:py-1 z-20">
+                                    Код: ${b.code}
+                                </div>
+                            </div>
+                            <div class="p-6 md:p-10 flex flex-col flex-grow bg-carbon">
+                                <h3 class="font-monumental text-base md:text-xl text-white uppercase tracking-wider mb-3 md:mb-4 border-b border-steel/50 pb-3 md:pb-4">${b.title}</h3>
+                                <div class="font-terminal text-[10px] md:text-sm text-gray-400 leading-relaxed">
+                                    <span class="${b.type === 'neutral' ? 'text-blood' : 'text-gold-dim'} block mb-2 md:mb-3 font-bold uppercase tracking-[0.1em] md:tracking-[0.2em]">
+                                        [ ${b.type === 'neutral' ? 'Предупреждение' : 'Ответ Командования'} ]
+                                    </span>
+                                    ${b.text}
+                                </div>
+                            </div>
+                        </div>
+                    `}).join('');
+
+                    carouselDots.innerHTML = briefingData.map((_, i) => `
+                        <button class="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-gold-primary shadow-[0_0_8px_rgba(212,175,55,0.8)]' : 'bg-steel'} indicator" aria-label="Слайд ${i+1}"></button>
+                    `).join('');
+                }
+
+                // 3. Интерактивная логика
+                
+                // Мобильное меню
+                const btnMenu = document.getElementById('mobile-menu-btn');
+                const menu = document.getElementById('mobile-menu');
+                if(btnMenu && menu) {
+                    btnMenu.addEventListener('click', () => menu.classList.toggle('hidden'));
+                    menu.querySelectorAll('a').forEach(link => link.addEventListener('click', () => menu.classList.add('hidden')));
+                }
+
+                // Анимация статистики
+                const counters = document.querySelectorAll('.stat-counter');
+                let started = false;
+                if(counters.length > 0) {
+                    const statContainer = document.getElementById('stats-container');
+                    if (statContainer) {
+                        const startCounters = () => {
+                            counters.forEach(counter => {
+                                const target = +counter.getAttribute('data-target');
+                                const duration = 2000;
+                                const increment = target / (duration / 16);
+                                let current = 0;
+                                const updateCounter = () => {
+                                    current += increment;
+                                    if (current < target) {
+                                        counter.innerText = Math.ceil(current);
+                                        requestAnimationFrame(updateCounter);
+                                    } else {
+                                        counter.innerText = target;
+                                    }
+                                };
+                                updateCounter();
+                            });
+                        }
+                        const statObserver = new IntersectionObserver((entries) => {
+                            if (entries[0].isIntersecting && !started) {
+                                startCounters();
+                                started = true;
+                                statObserver.disconnect();
+                            }
+                        }, { threshold: 0.1 });
+                        statObserver.observe(statContainer);
+                    }
+                }
+
+                // Карусель
+                if (briefingCarousel) {
+                    const btnPrev = document.getElementById('btn-prev');
+                    const btnNext = document.getElementById('btn-next');
+                    const indicators = document.querySelectorAll('.indicator');
+                    
+                    let currentCarouselIndex = -1; // Кэш состояния
+                    
+                    const updateIndicators = () => {
+                        const index = Math.round(briefingCarousel.scrollLeft / (briefingCarousel.clientWidth || 1));
+                        
+                        // ПРЕДОХРАНИТЕЛЬ: Пишем в DOM только если слайд переключился
+                        if (index === currentCarouselIndex) return;
+                        currentCarouselIndex = index;
+
+                        indicators.forEach((ind, i) => {
+                            if (i === index) {
+                                ind.className = "w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300 bg-gold-primary shadow-[0_0_8px_rgba(212,175,55,0.8)] indicator";
+                            } else {
+                                ind.className = "w-1.5 h-1.5 md:w-2 md:h-2 rounded-full transition-all duration-300 bg-steel indicator";
+                            }
+                        });
+                    };
+
+                    if (btnNext) btnNext.addEventListener('click', () => briefingCarousel.scrollBy({ left: briefingCarousel.clientWidth, behavior: 'smooth' }));
+                    if (btnPrev) btnPrev.addEventListener('click', () => briefingCarousel.scrollBy({ left: -briefingCarousel.clientWidth, behavior: 'smooth' }));
+                    
+                    let isTicking = false;
+                    briefingCarousel.addEventListener('scroll', () => {
+                        if (!isTicking) {
+                            window.requestAnimationFrame(() => {
+                                updateIndicators();
+                                isTicking = false;
+                            });
+                            isTicking = true;
+                        }
+                    }, { passive: true });
+                    
+                    indicators.forEach((ind, i) => {
+                        ind.addEventListener('click', () => {
+                             briefingCarousel.scrollTo({ left: briefingCarousel.clientWidth * i, behavior: 'smooth' });
+                        });
+                    });
+                }
+
+                // 4. Логика Модалок и Формы
+                const ctaModal = document.getElementById('cta-modal');
+                let ctaTimer;
+                if(ctaModal) {
+                    ctaTimer = setTimeout(() => {
+                        if (!document.activeElement.closest('#enlistment-form')) {
+                            ctaModal.classList.remove('hidden');
+                        }
+                    }, 60000);
+                    
+                    const btnAccept = document.getElementById('cta-accept');
+                    if (btnAccept) {
+                        btnAccept.addEventListener('click', () => {
+                            ctaModal.classList.add('hidden');
+                            window.location.hash = "#enlist";
+                        });
+                    }
+                    
+                    const btnDecline = document.getElementById('cta-decline');
+                    if (btnDecline) {
+                        btnDecline.addEventListener('click', () => ctaModal.classList.add('hidden'));
+                    }
+                }
+
+                const form = document.getElementById('enlistment-form');
+                const successModal = document.getElementById('success-modal');
+                if (form && successModal) {
+                    form.addEventListener('focusin', () => clearTimeout(ctaTimer));
+
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        const originalText = submitBtn.innerHTML;
+
+                        if (!navigator.onLine) {
+                            submitBtn.classList.replace('text-gold-primary', 'text-blood');
+                            submitBtn.classList.replace('border-gold-primary', 'border-blood');
+                            submitBtn.innerHTML = 'НЕТ СВЯЗИ СО ШТАБОМ (ОФЛАЙН)';
+                            setTimeout(() => {
+                                submitBtn.classList.replace('text-blood', 'text-gold-primary');
+                                submitBtn.classList.replace('border-blood', 'border-gold-primary');
+                                submitBtn.innerHTML = originalText;
+                            }, 3000);
+                            return;
+                        }
+
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = 'ШИФРОВАНИЕ...';
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                        setTimeout(() => {
+                            successModal.classList.remove('hidden');
+                            form.reset();
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }, 800);
+                    });
+                    
+                    const closeModalBtn = document.getElementById('close-modal');
+                    if (closeModalBtn) closeModalBtn.addEventListener('click', () => successModal.classList.add('hidden'));
+                    
+                    successModal.addEventListener('click', (e) => {
+                        if (e.target === successModal) successModal.classList.add('hidden');
+                    });
+                }
+            });
+        } catch (error) {
+            console.error("Штабные системы дали сбой:", error);
+        }
+    </script>
+</body>
+</html>
